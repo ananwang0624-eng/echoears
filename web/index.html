@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EchoEars — 听见超声</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header>
+  <h1>ECHO<span>EARS</span></h1>
+  <p class="tag">Hear 175 kHz ultrasonic echoes · 把超声回波搬进人耳</p>
+  <button id="liveBtn" class="ghost" title="Needs the USB rig — this page works without it">🔌 Live 连接实时硬件</button>
+</header>
+
+<main>
+  <section class="panel wide controls">
+    <div class="row">
+      <button id="play" class="primary">▶ Play 播放</button>
+      <span id="status2" class="meta"></span>
+      <label class="sel">Data 数据
+        <select id="dataset">
+          <option value="data/hand233">Hand sweep 手掌推拉 · 40 s</option>
+          <option value="data/walk233">Walk-up 走近走远 · 20 s</option>
+          <option value="data/scene233">Desk scene 桌面静景 · 0.16–2.5 m</option>
+          <option value="data/empty233">Empty control 静场对照 · 0.16–2.5 m</option>
+          <option value="data/scene233raw">⚠ RAW counts 原始计数(同一段,未归一化)</option>
+        </select>
+      </label>
+      <span id="meta" class="meta"></span>
+    </div>
+
+    <div class="row">
+      <label class="sel">Mode 听感模式
+        <select id="mode">
+          <option value="ping" selected>Sonar 声呐 — echo delay = distance 回声延迟=距离</option>
+          <option value="targets">Targets 目标 — vendor threshold rule 芯片门限选峰</option>
+          <option value="tones">Tones 音调 — pitch = distance 音高=距离</option>
+          <option value="sweep">Sweep 扫描 — raw, every bin 原始对照</option>
+        </select>
+      </label>
+      <span class="hint" id="rawWarn" hidden>⚠ <b>Raw counts</b>: the same
+        recording without per-bin noise normalisation. One near-field spike
+        is ~2400× the far field. Compare the SHAPE with the normalised set:
+        one lump against a flat axis. That is the whole argument — no
+        threshold can serve both ends of a 70 dB range.
+        · 原始计数:同一段录音不做归一化,近场比远场高约 2400 倍。看形状对比:
+        一个包 vs 平坦的轴。</span>
+      <span class="hint" id="modeHint">Sonar stretches the ~14 ms echo train into human
+        time (~×46 at the default ping period): the further the echo, the
+        later it returns after the tick. · 声呐把毫秒级回波列拉伸约几十倍搬进人耳。</span>
+    </div>
+
+    <div class="row sliders">
+      <label>Vol 音量 <input type="range" id="gain" min="0" max="1" step="0.01" value="0.6"><b id="gainV"></b></label>
+      <label>Speed 速度 <input type="range" id="speed" min="0.25" max="2" step="0.05" value="1"><b id="speedV"></b></label>
+      <label>Near pitch 近处音高 <input type="range" id="fNear" min="400" max="3000" step="50" value="1800"><b id="fNearV"></b></label>
+      <label>Far pitch 远处音高 <input type="range" id="fFar" min="100" max="1500" step="50" value="300"><b id="fFarV"></b></label>
+      <label>Compression γ 动态压缩 <input type="range" id="gamma" min="0.2" max="1" step="0.05" value="0.5"><b id="gammaV"></b></label>
+      <label>Gate 门限(噪声 σ) <input type="range" id="gate" min="0" max="7" step="0.1" value="3.5"><b id="gateV"></b></label>
+      <label>Blind zone 近场盲区 <input type="range" id="blind" min="0" max="40" step="1" value="0"><b id="blindV"></b></label>
+      <label>Ping period 脉冲周期 <input type="range" id="ping" min="0.3" max="2" step="0.1" value="0.8"><b id="pingV"></b></label>
+      <label>Reverb 混响(空间感) <input type="range" id="wet" min="0" max="0.6" step="0.05" value="0.25"><b id="wetV"></b></label>
+      <label class="chk"><input type="checkbox" id="sweep" checked> Chirp with distance 音高随距离扫掠</label>
+    </div>
+
+    <div class="mixer">
+      <div class="mixer-head">
+        <span>Channel mixer 通道混音</span>
+        <span class="hint">PC is off by default — a cross-check referee, not a third voice. · PC 默认关闭,它是配对裁判,不是第三个声源。</span>
+      </div>
+      <div id="mixer" class="strips"></div>
+    </div>
+
+    <dl class="readouts">
+      <div><dt>Frame 帧</dt><dd id="roFrame">—</dd></div>
+      <div><dt>Left peak 左侧回波</dt><dd id="roLeft">—</dd></div>
+      <div><dt>Right peak 右侧回波</dt><dd id="roRight">—</dd></div>
+    </dl>
+
+    <div class="row live">
+      <label class="sel">Bridge URL 桥接器地址
+        <input type="text" id="wsUrl" value="ws://localhost:8765" spellcheck="false">
+      </label>
+      <span class="hint">Run <code>run/8_web.py</code> (or
+        <code>python tools/bridge.py</code>), then click Live above — it
+        retries while the board boots (~20 s).
+        · 先跑桥接器,再点右上角连接,会自动重试。</span>
+    </div>
+  </section>
+
+  <section class="panel wide">
+    <div class="panel-head">
+      <h2>Top-down view · echo distance 头部俯视图</h2>
+      <span class="key"><i class="l"></i>Left temple 左镜腿 <i class="r"></i>Right temple 右镜腿</span>
+    </div>
+    <canvas id="ascan"></canvas>
+    <p class="hint">Distance runs outward from your head in the middle; a peak
+       further out is an object further away. The trace shows what CHANGED —
+       an object held still fades from it with a 2.6 s time constant. In
+       Targets mode the markers are what IS there, from raw counts, and
+       they stay. The axis starts at 16.3 cm because the receiver opens when
+       the 907 µs burst ends; anything closer is not invisible but
+       range-ambiguous — its echo is still arriving, so it piles into the
+       first bin, weaker the closer it is.
+       · 曲线是「变化」(静止物体 2.6 秒淡出);目标模式的标记是「存在」,不会淡出。
+       16.3 cm 以内不是盲区,是距离模糊区:回波堆在第一格,越近越弱。</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Echo profile per channel (A-scan) 通道矩阵</h2>
+      <span class="key"><i class="l"></i>PE pulse-echo 自发自收 <i class="r"></i>PC cross-channel, tx≠rx 交叉</span>
+    </div>
+    <canvas id="grid"></canvas>
+    <p class="hint">Row = transmitter, column = receiver. Diagonal cells are
+       pulse-echo, off-diagonal are pitch-catch; grey = decaying max-hold.
+       PC cells label the total tx→target→rx path — about twice the object
+       range. · 行=发射,列=接收;PC 格标注的是双站总路径(约为物距两倍)。</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Time × distance 瀑布图</h2></div>
+    <canvas id="waterfall"></canvas>
+    <p class="hint">Appears once playing. Top = left ear, bottom = right; a
+       sloped streak is something approaching or receding — try the Hand
+       sweep or Walk-up recordings.
+       · 播放后出现;上半左耳,下半右耳,斜线=靠近/远离。</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Output spectrum 输出频谱 <code>AnalyserNode</code></h2></div>
+    <canvas id="spectrum"></canvas>
+    <p class="hint">Appears once playing — what actually reaches the
+       speakers, not sensor data. · 播放后出现;这是真正送到扬声器的信号。</p>
+  </section>
+
+
+  <section class="panel wide explain">
+    <h2>How it works 它在做什么</h2>
+    <div class="cols">
+      <div>
+        <h3>Problem 问题</h3>
+        <p>Two ICU-10201 transducers on the temples of a pair of glasses fire
+           <b>175 kHz</b> ultrasound — three octaves above human hearing — and
+           record the echo profile out to ~2.5 m, 19 times a second. You cannot hear any of
+           what they "see". · 镜腿上两颗超声传感器,人耳完全听不见。</p>
+      </div>
+      <div>
+        <h3>Sonar mode 声呐(默认)</h3>
+        <p><b>Distance becomes delay — the physics itself.</b> A tick marks the
+           emission; each echo returns after a delay proportional to its range,
+           compressed in loudness, with reverb added. The real millisecond echo
+           train is stretched tens of times into human time — the mirror of
+           speeding seismograms up. · 滴一声后,回声按距离比例延迟返回,越远越晚。</p>
+      </div>
+      <div>
+        <h3>Tones &amp; sweep 音调与扫描</h3>
+        <p><b>Tones</b>: the strongest echoes each drive a continuous voice,
+           pitch = log distance (near = high), sticky and hysteretic so voices
+           glide instead of warbling. <b>Sweep</b>: the raw audification — one
+           gated grain per frame, every bin voiced, kept as the honest control.
+           · 音调:每个回波一条口哨;扫描:原始逐格,留作对照。</p>
+      </div>
+      <div>
+        <h3>Why two ears 为什么双耳</h3>
+        <p>Left temple to left ear, right to right — spatial hearing does the
+           direction-finding for free, no training needed. The 2×2 matrix also
+           carries two <b>pitch-catch</b> channels (one sensor fires, the other
+           listens): ellipse loci with the sensors as foci, exposed in the
+           mixer as a cross-check referee, off by default.
+           · 左镜腿→左耳,右镜腿→右耳;交叉信道当裁判,默认关闭。</p>
+      </div>
+      <div>
+        <h3>Signal path 信号通路</h3>
+        <p>Static-clutter removal (offline median for recordings, streaming
+           EMA live) → <b>divide each range bin by its own measured noise</b>
+           → gate + blind zone → per-channel synthesis → mixer → lowpass →
+           compressor. That middle step is why one gate works at every
+           distance: raw echoes span ~70 dB across the range axis, and in
+           noise-sigma units a static scene is flat to about 1 dB. The receiver opens only after the transmit
+           burst, so the range axis itself starts ~16 cm out; the blind-zone
+           slider trims ringdown residue just past that. Loudness is a fixed compressive
+           curve, amp = (σ/8)^γ — there is no auto-gain left to chase, because
+           per-bin normalisation removed the range spread it existed to hide. · 去静杂波→门限/盲区→合成→混音;RX 在发射后才开,轴从 ~16 cm 起。</p>
+      </div>
+      <div>
+        <h3>Phase continuity 载波相位</h3>
+        <p>Carrier phase is accumulated across grains and voices are slewed
+           with <code>setTargetAtTime</code> — discontinuities in time are
+           broadband clicks in frequency, so both are engineered out.
+           · 相位连续累加,增益滑变,消除咔哒声。</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span id="status">初始化 …</span>
+  <span class="right">Real ICU-10201 recordings 真实录音 · Web Audio API ·
+    <a href="https://github.com/ananwang0624-eng/echoears">source 源码</a></span>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
