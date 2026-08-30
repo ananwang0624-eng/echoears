@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
+  "files.exclude": { "**/__pycache__": true, "**/.pytest_cache": true }
+}

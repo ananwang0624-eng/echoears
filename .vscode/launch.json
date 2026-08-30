@@ -1,0 +1,184 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🎧 LIVE — 双耳收听 233cm (双传感器 20Hz) (60s)",
+      "program": "${workspaceFolder}/apps/live.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--odr",
+        "4",
+        "--odr-ms",
+        "25",
+        "--seconds",
+        "60",
+        "--wav",
+        "${workspaceFolder}/out/live.wav"
+      ]
+    },
+    {
+      "name": "🎧 LIVE — 双耳收听 233cm (双传感器 20Hz) (不限时, Ctrl-C 停)",
+      "program": "${workspaceFolder}/apps/live.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--odr",
+        "4",
+        "--odr-ms",
+        "25",
+        "--wav",
+        "${workspaceFolder}/out/live.wav"
+      ]
+    },
+    {
+      "name": "▶ REPLAY — 录音跑同一条管线 (无硬件)",
+      "program": "${workspaceFolder}/apps/live.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--replay",
+        "${input:npzPath}",
+        "--odr",
+        "${input:archiveOdr}",
+        "--seconds",
+        "20",
+        "--wav",
+        "${workspaceFolder}/out/replay.wav"
+      ]
+    },
+    {
+      "name": "🔍 SHOW — 看录音的距离剖面",
+      "program": "${workspaceFolder}/apps/show.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "${input:npzPath}",
+        "--odr",
+        "${input:archiveOdr}",
+        "--static"
+      ]
+    },
+    {
+      "name": "📐 QUEUE — 装上 233cm 队列",
+      "program": "${workspaceFolder}/tools/use_queue.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "set",
+        "${env:HOME}/Documents/GitHub/ultrasonic/firmware/txrot/txrot_long233.json"
+      ]
+    },
+    {
+      "name": "📐 QUEUE — status (当前生效的是哪个)",
+      "program": "${workspaceFolder}/tools/use_queue.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "status"
+      ]
+    },
+    {
+      "name": "📐 QUEUE — plan 任意量程",
+      "program": "${workspaceFolder}/tools/measqueue.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "plan",
+        "--range-cm",
+        "${input:rangeCm}"
+      ]
+    },
+    {
+      "name": "↩️  QUEUE — restore (撤销 echoears 对上游的改动)",
+      "program": "${workspaceFolder}/tools/use_queue.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "restore"
+      ]
+    },
+    {
+      "name": "✅ TEST — 单元测试",
+      "module": "pytest",
+      "args": [
+        "tests/",
+        "-v"
+      ],
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "▶ RUN CURRENT FILE (py39)",
+      "program": "${file}",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${env:HOME}/Documents/GitHub/ultrasonic/.venv-py39/bin/python",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "npzPath",
+      "type": "promptString",
+      "description": "录音 npz 路径",
+      "default": "${env:HOME}/Documents/GitHub/ultrasonic/matrix/data/m3x3_txrot_odr13/hand_moving/txrot_20260719_174149.npz"
+    },
+    {
+      "id": "archiveOdr",
+      "type": "pickString",
+      "description": "这段录音的 CIC ODR",
+      "options": [
+        "6",
+        "4",
+        "5",
+        "3"
+      ],
+      "default": "6"
+    },
+    {
+      "id": "rangeCm",
+      "type": "promptString",
+      "description": "目标量程 cm",
+      "default": "120"
+    }
+  ]
+}
