@@ -1,0 +1,15 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install numpy pytest
+      # Hardware paths are import-guarded, so the suite runs anywhere.
+      - run: python -m pytest tests/ -q
+      # documented numbers drifted three times in one working session, each
+      # caught late rather than at edit time; this re-derives them
+      - run: python tools/check_docs.py --strict
