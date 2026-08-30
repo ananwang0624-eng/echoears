@@ -61,7 +61,11 @@ export class EchoAudio {
     this.strips = [];
     this.params = {
       mode: "ping",
-      fNear: 1800, fFar: 300,   // tones: pitch range, log-mapped
+      fNear: 1800, fFar: 550,   // tones: pitch range, log-mapped.
+                                // fFar sits above ~500 Hz on purpose:
+                                // bone-conduction sets roll off hard
+                                // below that, and far targets at 300 Hz
+                                // simply vanished on the actual rig
       gamma: 0.5, gain: 0.6,
       sweep: true,              // sweep mode: chirp vs fixed carrier
       gate: 3.5,                // sigmas below which a bin is silence
@@ -189,6 +193,8 @@ export class EchoAudio {
       const f = fNear * Math.pow(fFar / fNear, pos) * mul;
       const a = Math.min(1, Math.log2(Math.max(over, 1)) / 3); // 8x over = full
       voice.osc.frequency.setTargetAtTime(f, t, glide);
+      voice.osc2.frequency.setTargetAtTime(2 * f, t, glide);
+      voice.g2.gain.setTargetAtTime(0.5 * (1 - pos) * (1 - pos), t, 0.03);
       voice.g.gain.setTargetAtTime(0.5 * Math.pow(a, gamma), t, 0.03);
     };
 
@@ -291,12 +297,20 @@ export class EchoAudio {
 
   _schedulePing() {
     clearTimeout(this._pt);
+    // Parking-sensor PRF: the slider sets the IDLE period; the nearest
+    // voiced echo shortens it, down to 0.3x at point blank. Rhythm is the
+    // one cue every transducer (and every juror) resolves perfectly.
+    // Echo trains still stretch over pingS * 0.8, so accelerated pings
+    // overlap only their silent far tails.
+    const near = this._nearPos;
+    const k = near === null || near === undefined ? 1 : 0.3 + 0.7 * near;
     this._pt = setTimeout(() => {
       try { this._pingAll(); } finally { this._schedulePing(); }
-    }, this.params.pingS * 1000);
+    }, this.params.pingS * 1000 * k);
   }
 
   _pingAll() {
+    this._nearPos = null;
     if (!this.ctx || this.ctx.state !== "running" || this.params.mode !== "ping")
       return;
     for (const s of this.strips) {
@@ -336,7 +350,11 @@ export class EchoAudio {
     const scale = 1 / Math.max(FULL_SIGMA - gateAbs, 1e-9);
     for (const [v, i] of this._peaks(prof, gateAbs, blind, 3, 12)) {
       const pos = i / (n - 1);
-      addWavelet(0.03 + pos * stretch, this._amp((v - gateAbs) * scale), f0);
+      const a = this._amp((v - gateAbs) * scale);
+      addWavelet(0.03 + pos * stretch, a, f0);
+      // brightness: near echoes carry an octave partial (far = pure)
+      addWavelet(0.03 + pos * stretch, a * 0.5 * (1 - pos) * (1 - pos), f0 * 2);
+      if (this._nearPos === null || pos < this._nearPos) this._nearPos = pos;
     }
 
     const node = this.ctx.createBufferSource();
@@ -356,7 +374,17 @@ export class EchoAudio {
       osc.connect(g);
       g.connect(s.gain);
       osc.start();
-      s.voices.push({ osc, g, bin: -1 });
+      // brightness harmonic: an octave partial mixed in proportionally to
+      // NEARNESS. Near = rich, far = pure sine. A lowpass can't do this on
+      // sine voices (nothing above the carrier to cut), and sinking far
+      // targets toward low frequencies would bury them on bone conduction.
+      const osc2 = this.ctx.createOscillator();
+      const g2 = this.ctx.createGain();
+      g2.gain.value = 0;
+      osc2.connect(g2);
+      g2.connect(g);
+      osc2.start();
+      s.voices.push({ osc, g, osc2, g2, bin: -1 });
     }
   }
 
@@ -387,6 +415,8 @@ export class EchoAudio {
       // crude equal-loudness tilt: low carriers need more level to be heard
       amp *= Math.min(2, Math.pow(600 / f, 0.3));
       voice.osc.frequency.setTargetAtTime(f, t, glide);
+      voice.osc2.frequency.setTargetAtTime(2 * f, t, glide);
+      voice.g2.gain.setTargetAtTime(0.5 * (1 - pos) * (1 - pos), t, 0.03);
       voice.g.gain.setTargetAtTime(amp, t, 0.03);        // fast attack
     };
 
