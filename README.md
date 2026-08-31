@@ -12,7 +12,7 @@ sounds like *before* the processing — that A/B is the whole project in
 thirty seconds.
 
 *Final project for **Advanced Coding Tools and Methodologies (ACTAM)**,
-Politecnico di Milano, A.Y. 2025/26 — solo project by
+Politecnico di Milano, A.Y. 2025/26 — solo project by Anan Wang
 [ananwang0624-eng](https://github.com/ananwang0624-eng).*
 
 *Zero runtime dependencies · 79 unit tests · CI re-derives every documented
