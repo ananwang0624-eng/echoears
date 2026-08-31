@@ -85,7 +85,7 @@ export class AScan {
     }
     // the head
     ctx.fillStyle = "rgba(255,255,255,.5)";
-    ctx.fillText("YOU 你", mid, h - 4);
+    ctx.fillText("YOU", mid, h - 4);
 
     // tuning overlays: what the gate and blind-zone sliders actually do.
     // Tuning was ear-only before — the sliders had no visual consequence.
@@ -104,7 +104,7 @@ export class AScan {
           ctx.fillStyle = "rgba(255,107,107,.5)";
           ctx.font = "9px ui-monospace, monospace";
           ctx.textAlign = "center";
-          ctx.fillText("blind 盲区", mid, 24);
+          ctx.fillText("blind", mid, 24);
         }
       }
       // gate is an absolute sigma now, and `peak` is the sigma full scale,

@@ -49,7 +49,7 @@ def capture(src, seconds: float, label: str, note: str, out: Path) -> dict:
             last = sec
             print(f"  {sec:.0f}s  {len(frames)} frames")
     if not frames:
-        raise RuntimeError("0 frames — 板子没有在出流")
+        raise RuntimeError("0 frames — is the board streaming?")
 
     iq = np.stack(frames).astype(np.complex64)          # (n, ch, s), imag=0
     ts_col = np.asarray(stamps, dtype=np.float64)[:, None]  # (n, 1)
@@ -91,7 +91,7 @@ def main() -> int:
         while not src.channels:
             if not src.poll():
                 time.sleep(0.02)
-        print(f"[record] {args.seconds:.0f} s @ {src.frame_hz:.1f} Hz — 开始")
+        print(f"[record] {args.seconds:.0f} s @ {src.frame_hz:.1f} Hz — recording")
         capture(src, args.seconds, args.label, args.note, out)
     return 0
 

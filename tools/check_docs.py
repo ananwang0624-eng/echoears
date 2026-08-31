@@ -139,7 +139,7 @@ def checks() -> list[tuple[str, bool, str]]:
         for line in txt.splitlines():
             if "TerraTone" in line or "predecessor" in line:
                 continue
-            nums.update(int(x) for x in re.findall(r"(\d+)\s*(?:tests|个)", line))
+            nums.update(int(x) for x in re.findall(r"(\d+)\s*tests", line))
         stale = {n for n in nums if 10 < n < 500 and n != n_tests}
         check(f"{doc} test count ({n_tests} collected)",
               not stale, f"stale numbers mentioned: {sorted(stale)}" if stale else "ok")

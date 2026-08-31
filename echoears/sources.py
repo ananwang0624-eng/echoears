@@ -258,9 +258,9 @@ class LiveSource:
         last = ""
         for attempt in range(1, self.attempts + 1):
             if attempt > 1:
-                print(f"\n[live] 自动救板 (第 {attempt}/{self.attempts} 次尝试) ...")
+                print(f"\n[live] auto-recovery (attempt {attempt}/{self.attempts}) ...")
                 if not recover.auto_recover(port):
-                    print("[live] 恢复阶梯跑完仍无响应 — 需要物理拔插 USB")
+                    print("[live] recovery ladder exhausted — replug the USB cable")
                     break
                 time.sleep(1.0)
             try:
@@ -284,7 +284,7 @@ class LiveSource:
                     self.close()
                     raise RuntimeError(self._config_hint(e, configs)) from None
                 last = f"{type(e).__name__}: {e}"
-                print(f"[live] 起板失败: {last}")
+                print(f"[live] bring-up failed: {last}")
             except BaseException:
                 # KeyboardInterrupt (incl. a remapped SIGTERM) is NOT an
                 # Exception, so without this the longest window in the
@@ -292,15 +292,15 @@ class LiveSource:
                 # through — got no cleanup at all, and `with LiveSource(...)`
                 # cannot help because Python skips __exit__ when __enter__
                 # raises. This is exactly when an impatient user hits stop.
-                print("\n[live] 起板期间被中断 — 收板中 ...")
+                print("\n[live] interrupted during bring-up — closing the rig ...")
                 self.close()
                 raise
             # Rig.close() runs its own auto-recover when the stop write failed.
             self.close()
 
         raise RuntimeError(
-            f"{last} — 已自动重试 {self.attempts} 次并跑过恢复阶梯(API 复位 / "
-            f"软复位 / LDO 断电重上电)仍未成功"
+            f"{last} — retried {self.attempts} times through the recovery ladder "
+            f"(API reset / soft reset / LDO power-cycle) without success"
         )
 
     @staticmethod
@@ -310,13 +310,13 @@ class LiveSource:
         ids = tuple(int(x) for x in found.group(1).split(",") if x.strip()) if found else ()
         match = next((c.name for c in getattr(configs, "CONFIGS", {}).values()
                       if tuple(sorted(c.sensor_ids)) == tuple(sorted(ids))), None)
-        msg = [f"板子上实际连着的传感器是 {list(ids)},和当前配置对不上。",
-               "这是配置问题,不是板子坏了 —— 不会去复位硬件。"]
+        msg = [f"sensors actually connected: {list(ids)} — they do not match this config.",
+               "This is a config mismatch, not a broken board — not resetting hardware."]
         if match:
-            msg.append(f"用 --config {match} 就对了。")
+            msg.append(f"use --config {match}.")
         else:
-            msg.append("没有现成配置匹配这个传感器组合;"
-                       "在上游 matrix/configs.py 里加一个 CaptureConfig。")
+            msg.append("no existing config matches this sensor set; "
+                       "add a CaptureConfig in the upstream matrix/configs.py.")
         return "  " + "\n  ".join(msg)
 
     def _autoport(self) -> str:
@@ -342,7 +342,7 @@ class LiveSource:
                 try:
                     from common.evk import recover
                     if not recover.try_open(port):   # two-open health check
-                        print("[live] 板子关门后不应答 — 现场救板,免得下次打不开")
+                        print("[live] board unresponsive after close — recovering now so the next open works")
                         recover.auto_recover(port)
                 except Exception as e:  # noqa: BLE001
                     print(f"[live] close-probe: {e}")

@@ -158,12 +158,12 @@ def main() -> int:
                      help="beat interval; the 233 cm queue needs 25 ms "
                           "(24.0 ms of RX window + readout)")
     src.add_argument("--attempts", type=int, default=3,
-                     help="板子起不来时的重试次数;每次重试跑一遍恢复阶梯")
+                     help="retries when the board will not come up; each retry runs the recovery ladder")
 
     ears = ap.add_argument_group("ears")
-    # id 3 = 左镜腿, id 2 = 右镜腿 — 2026-08-28 实听确认(反过来是镜像的)。
-    ears.add_argument("--left-sensor", type=int, default=3, help="左镜腿传感器 id")
-    ears.add_argument("--right-sensor", type=int, default=2, help="右镜腿传感器 id")
+    # id 3 = LEFT temple, id 2 = RIGHT — confirmed by ear 2026-08-28 (reversed sounds mirrored).
+    ears.add_argument("--left-sensor", type=int, default=3, help="left-temple sensor id")
+    ears.add_argument("--right-sensor", type=int, default=2, help="right-temple sensor id")
     ears.add_argument("--left", type=int, default=None, help="explicit L channel index")
     ears.add_argument("--right", type=int, default=None, help="explicit R channel index")
 
@@ -208,9 +208,9 @@ def main() -> int:
             # Calibration failures are a hardware state, not a crash. The
             # upstream diagnosis (LINK-DEAD vs TX-MUTED) is already printed
             # above; add the remedy and exit quietly.
-            print(f"\n  ❌ 板子没能起来:{e}")
-            print("     自动恢复已经试过了 —— 现在需要物理拔插 USB,等两秒插回去。")
-            print("     还是不行:检查排线是否松动。")
+            print(f"\n  ❌ board failed to come up: {e}")
+            print("     auto-recovery already ran — replug the USB cable, wait two seconds.")
+            print("     still failing: check the flex cable seating.")
             return 2
         # From here the rig is STREAMING, so everything below must be inside
         # the try/finally — this spin loop is unbounded (a board that never
@@ -234,7 +234,7 @@ def main() -> int:
     try:
         audio = run(source, ch_l, ch_r, args, frame_hz)
     except KeyboardInterrupt:
-        print("\n[live] 停止")
+        print("\n[live] stopped")
         audio = np.zeros((0, 2), dtype=np.float32)
     finally:
         if isinstance(source, LiveSource):

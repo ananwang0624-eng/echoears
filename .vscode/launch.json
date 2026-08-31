@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "🎧 LIVE — 双耳收听 233cm (双传感器 20Hz) (60s)",
+      "name": "🎧 LIVE — binaural 233cm (two sensors, 20Hz) (60s)",
       "program": "${workspaceFolder}/apps/live.py",
       "type": "debugpy",
       "request": "launch",
@@ -22,7 +22,7 @@
       ]
     },
     {
-      "name": "🎧 LIVE — 双耳收听 233cm (双传感器 20Hz) (不限时, Ctrl-C 停)",
+      "name": "🎧 LIVE — binaural 233cm (unlimited, Ctrl-C stops)",
       "program": "${workspaceFolder}/apps/live.py",
       "type": "debugpy",
       "request": "launch",
@@ -40,7 +40,7 @@
       ]
     },
     {
-      "name": "▶ REPLAY — 录音跑同一条管线 (无硬件)",
+      "name": "▶ REPLAY — same pipeline from a recording (no hardware)",
       "program": "${workspaceFolder}/apps/live.py",
       "type": "debugpy",
       "request": "launch",
@@ -60,7 +60,7 @@
       ]
     },
     {
-      "name": "🔍 SHOW — 看录音的距离剖面",
+      "name": "🔍 SHOW — range profile of a recording",
       "program": "${workspaceFolder}/apps/show.py",
       "type": "debugpy",
       "request": "launch",
@@ -76,7 +76,7 @@
       ]
     },
     {
-      "name": "📐 QUEUE — 装上 233cm 队列",
+      "name": "📐 QUEUE — install the 233cm queue",
       "program": "${workspaceFolder}/tools/use_queue.py",
       "type": "debugpy",
       "request": "launch",
@@ -90,7 +90,7 @@
       ]
     },
     {
-      "name": "📐 QUEUE — status (当前生效的是哪个)",
+      "name": "📐 QUEUE — status (which one is active)",
       "program": "${workspaceFolder}/tools/use_queue.py",
       "type": "debugpy",
       "request": "launch",
@@ -103,7 +103,7 @@
       ]
     },
     {
-      "name": "📐 QUEUE — plan 任意量程",
+      "name": "📐 QUEUE — plan any range",
       "program": "${workspaceFolder}/tools/measqueue.py",
       "type": "debugpy",
       "request": "launch",
@@ -118,7 +118,7 @@
       ]
     },
     {
-      "name": "↩️  QUEUE — restore (撤销 echoears 对上游的改动)",
+      "name": "↩️  QUEUE — restore (undo the upstream edit)",
       "program": "${workspaceFolder}/tools/use_queue.py",
       "type": "debugpy",
       "request": "launch",
@@ -131,7 +131,7 @@
       ]
     },
     {
-      "name": "✅ TEST — 单元测试",
+      "name": "✅ TEST — unit tests",
       "module": "pytest",
       "args": [
         "tests/",
@@ -159,13 +159,13 @@
     {
       "id": "npzPath",
       "type": "promptString",
-      "description": "录音 npz 路径",
+      "description": "recording npz path",
       "default": "${env:HOME}/Documents/GitHub/ultrasonic/matrix/data/m3x3_txrot_odr13/hand_moving/txrot_20260719_174149.npz"
     },
     {
       "id": "archiveOdr",
       "type": "pickString",
-      "description": "这段录音的 CIC ODR",
+      "description": "CIC ODR of the recording",
       "options": [
         "6",
         "4",
@@ -177,7 +177,7 @@
     {
       "id": "rangeCm",
       "type": "promptString",
-      "description": "目标量程 cm",
+      "description": "target range in cm",
       "default": "120"
     }
   ]

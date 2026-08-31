@@ -7,7 +7,7 @@ confirm it, then cut Demo A from the bottom up.
 
 ---
 
-## 1. 90-second elevator story · 90 秒开场
+## 1. 90-second elevator story
 
 > EchoEars puts two ICU-10201 ultrasonic transducers on the temples of a pair
 > of glasses. They fire ~175 kHz pings — three octaves above hearing — and
@@ -39,23 +39,23 @@ integration (raw Web Audio API: AudioContext graph, `AnalyserNode` spectrum,
 
 ---
 
-## 2. Demo script A — hardware on stage · 硬件现场演示
+## 2. Demo script A — hardware on stage
 
 Setup: board on USB, headphones/output connected, repo open in VS Code.
 
 1. **Launch.** Open `run/8_web.py`, press ▶ Run. Terminal shows, in order:
    - `[launcher] switching to …/.venv-py39/bin/python` (re-exec into EVK py3.9)
-   - banner `网页版实时收听 (233 cm, 2×2 通道)`
-   - `✅ 队列已是 txrot_long233_tx160.json(233 cm)` — if instead it says the
+   - banner `Live listening in the browser (233 cm, 2x2 channels)`
+   - `✅ queue is txrot_long233_tx160.json (233 cm)` — if instead it says the
      queue is wrong, it exits and tells you to run `run/2_apply_queue.py` first
    - browser opens `http://localhost:8080` automatically
-   - `[bridge] ws://localhost:8765 — 等待浏览器连接`
+   - `[bridge] ws://localhost:8765 — waiting for the browser`
    - board boots (~20 s: flash + phase calibration), then
-     `[bridge] 实时 19.2 Hz, 耳朵=ch3/0 — Ctrl-C 停止`
-2. **Connect.** Only after the `实时 … Hz` line: click **Live 连接实时硬件**
+     `[bridge] live 19.2 Hz, ears=ch3/0 — Ctrl-C to stop`
+2. **Connect.** Only after the `live … Hz` line: click **Live**
    (top right). If you click early, the page retries every 2 s for up to 40 s
    and shows a countdown — that is fine, narrate it. Status turns
-   "Live stream connected"; the meta line shows `4 通道 × 302 格 · 19.2 Hz ·
+   "Live stream connected"; the meta line shows `4 ch × 302 samples · 19.2 Hz ·
    16–251 cm`. Play/Speed grey out (live has no transport).
 3. **Sonar walk (the core 60 s).** Mode = Sonar. Have a target (your hand, a
    book, a volunteer) move toward/away in the **0.3–1.2 m** band — that is the
@@ -92,7 +92,7 @@ this gap the morning of. If pre-flight fails, run Demo B and say so.
 
 ---
 
-## 2a-bis. Targets mode — the chip's own rule · 目标模式
+## 2a-bis. Targets mode — the chip's own rule
 
 Switch Mode to **Targets**. One steady tone = one object; the desk sits at
 ~81 cm with ±3 cm jitter. The committee line: *"The on-chip rangefinder's
@@ -105,7 +105,7 @@ the first 40 samples; that filter lives inside the algo we displaced, so
 the host subtracts the static estimate there — same job, other side of the
 SPI bus.
 
-## 2b. The one-click beat: raw vs normalised · 原始 vs 归一化
+## 2b. The one-click beat: raw vs normalised
 
 The strongest 30 seconds available, and it needs no hardware. Dataset
 dropdown → **⚠ RAW counts**, then back.
@@ -150,7 +150,7 @@ first; neither replaces it.
 
 ---
 
-## 3. Demo script B — no hardware, or hardware dies · 无硬件预案
+## 3. Demo script B — no hardware, or hardware dies
 
 > **Do not promise a scene-vs-empty A/B.** Both shipped recordings are
 > static and are statistically indistinguishable (mean σ per range band
@@ -166,12 +166,12 @@ is no hand motion in it. It demonstrates the full rendering pipeline and the
 room's fixed geometry; the motion story needs the live rig."*
 
 1. Run `run/8_web.py` with **no board plugged in**. It detects the absence
-   and starts the bridge in replay: `🔌 没插板子 — 桥接器用录音回放:scene233.npz`.
+   and starts the bridge in replay: `🔌 no board — the bridge will replay a recording: scene233.npz`.
    Click Live as before — identical wire format, identical page.
 2. Or skip Live entirely: the page's own **Play** button replays the shipped
    `web/data/` exports in-browser with zero bridge (this is also what a fresh
    clone gets — `out/` is gitignored, so 8_web.py then prints
-   `只开网页,用页面内置的录音回放` and serves the page only).
+   `serving the page only; use its built-in replay` and serves the page only).
 3. What to show: Desk scene (769 frames @ 19.23 Hz, 4 ch × 302 bins,
    16–251 cm, static clutter removed) — the far-wall echo renders in the
    A-scan (verified in-browser, zero console errors). Then switch dataset to
@@ -185,7 +185,7 @@ room's fixed geometry; the motion story needs the live rig."*
 
 ---
 
-## 4. Likely committee questions · 答辩问答
+## 4. Likely committee questions
 
 - **Why not Tone.js / npm dependencies?** The web app is dependency-free ES
   modules on the raw Web Audio API. The synthesis needs sample-level control
@@ -242,7 +242,7 @@ room's fixed geometry; the motion story needs the live rig."*
 
 ---
 
-## 5. Failure drill · 故障预案
+## 5. Failure drill
 
 - **Board will not come up (`TX-MUTED` / `LINK-DEAD`).** Automatic: the
   launcher runs the upstream recovery ladder (API reset → soft reset → LDO
@@ -253,7 +253,7 @@ room's fixed geometry; the motion story needs the live rig."*
   the message names the config that matches what is plugged in. Do NOT
   power-cycle in response (resetting a healthy board is how you wedge it).
 - **Bridge never connects.** The page retries every 2 s for 40 s, then says
-  `40 秒内连不上桥接器`. Response: unplug the board, Ctrl-C, re-run
+  `no bridge after 40 s`. Response: unplug the board, Ctrl-C, re-run
   `run/8_web.py` → it falls back to replay automatically (Demo B). Or ignore
   Live and press Play — the in-browser replay needs no bridge at all.
 - **No sound.** In order: (1) browser suspended audio — status bar says click
@@ -271,7 +271,7 @@ static server**. Every rung shows the same page.
 
 ---
 
-## 5b. Pre-push, already verified · 推送前预检(已做)
+## 5b. Pre-push, already verified
 
 Both were run and passed, so pushing is not a gamble:
 - the suite is green in a clean `numpy pytest` environment with no EVK, so
@@ -282,7 +282,7 @@ Both were run and passed, so pushing is not a gamble:
 What is left is the part only you can do: create the repo, push, set Pages
 source to "GitHub Actions", and open the URL once.
 
-## 6. Pre-flight checklist, morning of 2026-09-01 · 当天早上
+## 6. Pre-flight checklist, morning of 2026-09-01
 
 Run in this order; each step names its expected output.
 

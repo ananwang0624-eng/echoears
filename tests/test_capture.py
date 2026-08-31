@@ -29,7 +29,7 @@ class FakeSrc:
 
 def test_capture_roundtrip(tmp_path):
     out = tmp_path / "hand233.npz"
-    entry = capture(FakeSrc(), 0.2, "hand", "单手推拉", out)
+    entry = capture(FakeSrc(), 0.2, "hand", "hand push-pull", out)
 
     assert entry["label"] == "hand"
     assert entry["frames"] >= 2

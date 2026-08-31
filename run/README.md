@@ -1,88 +1,97 @@
-# run/ — 点击运行
+# run/ — click to run
 
-每个脚本用 VS Code 打开后点右上角 **▶ Run** 就能跑。不用敲命令、不用记参数。
-一路按 **Enter** 走默认值,或者输入自己的数字。
+Open any script here in VS Code and hit **▶ Run** (top right). No commands to
+type, no flags to remember; press **Enter** through the prompts for defaults.
 
-解释器会自己切到 `ultrasonic/.venv-py39`(EVK 驱动栈是 py3.9),
-所以用哪个 Python 点开都无所谓。
+The interpreter re-execs into `ultrasonic/.venv-py39` by itself (the EVK
+driver stack is py3.9), so it does not matter which Python opens the file.
 
-| 脚本 | 干什么 | 要硬件? |
+| Script | What it does | Hardware? |
 | --- | --- | --- |
-| `1_listen.py` | 双耳收听(终端版),233 cm,双传感器 19.2 Hz | ✅ |
-| `2_apply_queue.py` | 装上 233 cm meas queue | — |
-| `3_queue_status.py` | 当前生效的是哪个队列 + 它的量程 | — |
-| `4_replay.py` | 用录音跑同一条音频管线 | ❌ |
-| `5_show_recording.py` | 看录音的距离剖面(ASCII) | ❌ |
-| `6_plan_queue.py` | 规划任意量程,只算不写 | — |
-| `7_test.py` | 单元测试(79 个) | ❌ |
-| `8_web.py` | **网页版实时收听**:起服务器+桥接器+开浏览器,一键 | ✅ |
-| `9_rangefinder.py` | **官方测距固件**:gpt + Long Range + TX Opt,2 个自发自收通道,芯片自己报目标 | ✅ |
-| `10_rangefinder_cfg.py` | 同上但**换预设**:Short Range(近场/手掌友好)、Static Target Rejection、出厂默认 | ✅ |
+| `1_listen.py` | Binaural listening (terminal), 233 cm, two sensors, 19.2 Hz | ✅ |
+| `2_apply_queue.py` | Install the 233 cm meas queue | — |
+| `3_queue_status.py` | Which queue is active + its range | — |
+| `4_replay.py` | Run the same audio pipeline from a recording | ❌ |
+| `5_show_recording.py` | Inspect a recording's range profile (ASCII) | ❌ |
+| `6_plan_queue.py` | Plan any range — calculates, writes nothing | — |
+| `7_test.py` | Unit tests (79 tests) | ❌ |
+| `8_web.py` | **Live listening in the browser**: server + bridge + browser, one click | ✅ |
+| `9_rangefinder.py` | **Vendor rangefinder firmware**: gpt + Long Range + TX Opt, 2 pulse-echo channels, on-chip targets | ✅ |
+| `10_rangefinder_cfg.py` | Same, but **switch preset**: Short Range (near-field / palm-friendly), Static Target Rejection, factory default | ✅ |
 
-**录演示素材** → [`capture/`](../capture/RECORDING_GUIDE.md) 文件夹:每个镜头一个
-`record_*.py` 启动器(空场景/推拉/二重奏/走动/开门),点 ▷ 就录,多录几遍就多点几次。
+**Recording demo material** → the [`capture/`](../capture/RECORDING_GUIDE.md)
+folder: one `record_*.py` launcher per shot (empty / hand / duet / walk / door /
+two-object / crossing / material). Click ▶ to record; click again for another take.
 
-## 常用流程
+## Common flows
 
-**第一次** → `2_apply_queue.py` 装队列 → `1_listen.py` 戴耳机走动。
+**First time** → `2_apply_queue.py` to install the queue → `1_listen.py` with
+headphones.
 
-**板子不在手边** → `4_replay.py`。
+**No board at hand** → `4_replay.py`.
 
-**声音不对/想看数据** → `5_show_recording.py`。
+**Sound seems wrong / want to see the data** → `5_show_recording.py`.
 
-## 硬件与量程
+## Hardware and range
 
-echoears 只有一个采集配置:**镜腿两颗传感器**(id 2 和 3),
-4 通道,**233 cm**(PE),ODR 4,302 样本(0.78 cm/格),**TX 160 周期**,**19.2 Hz**。
-TX 决定能量(16 周期时 65 cm 外全是噪声,160 周期实测 +9 dB、够到 ~1.2 m);
-量程轴由 RX 窗口决定;传感器物理上限:墙 1.7 m、柱 1.1 m。
-RX 从发射开始 0.9 ms 后才开,所以距离轴从 ~15.6 cm 起,15.6 cm 内是物理盲区。
+echoears has a single capture configuration: the **two-sensor temple pair**
+(ids 2 and 3), 4 channels, **233 cm** (pulse-echo), ODR 4, 302 samples
+(0.78 cm/bin), **TX 160 cycles**, **19.2 Hz**.
+TX sets the energy budget (16 cycles left everything past 65 cm in the noise;
+160 cycles measured +9 dB and real echoes to ~1.2 m); the RX window sets the
+range axis; the part's physical ceiling is 1.7 m for a wall, 1.1 m for a post.
+RX opens 0.9 ms after TX onset, so the axis starts at ~16 cm; closer targets
+are range-ambiguous (they pile into the first bin), not invisible.
 
-两颗而不是三颗带来两个好处:轮转少一个 TX 槽 → 帧率 25.6 → 38.5 Hz;
-读出预算减半 → 装得下 ODR 5,距离分辨率比三传感器时翻倍。
+Two sensors instead of three buy two things: one fewer TX slot per rotation
+(25.6 → 38.5 Hz budget) and half the readout, which is what makes ODR 5
+possible and doubles range resolution versus the three-sensor rig.
 
-> 板子上插的传感器和配置对不上时(比如只连了两颗却用三颗的配置),
-> 会直接告诉你该用哪个 config —— **不会去复位硬件**。
-> 硬件复位变不出没插的传感器,反复复位反而会把好板子搞挂。
+> If the sensors on the board do not match the configuration, the launcher
+> says which config to use — it does **not** reset the hardware. A reset
+> cannot conjure a missing sensor, and repeated resets wedge healthy boards.
 
-量程由 RX 指令的监听时长决定;ODR 只决定这段窗口被切成多少样本,
-受 340 样本的 IQ 缓冲上限约束。想要别的量程用 `6_plan_queue.py` 先算。
+Range is set by the RX instruction's listening time; ODR only decides how many
+samples that window is cut into (340-sample IQ buffer cap). For other ranges,
+plan first with `6_plan_queue.py`.
 
-> 归档的旧录音是 ODR 6(22 cm)录的 —— `4_replay.py` / `5_show_recording.py`
-> 默认就按 6 读它们,距离轴按文件走,和采集配置无关。
+> Archived recordings were captured at ODR 6 — `4_replay.py` /
+> `5_show_recording.py` default to 6 for them; the axis follows the file.
 
-## 板子起不来
+## When the board will not come up
 
-`TX-MUTED` / `LINK-DEAD` 是这块板子常见的瞬态,**现在会自动处理**:
-起板失败时自动跑上游的恢复阶梯(API 复位 → 软复位 → LDO 断电重上电),
-然后重试,默认最多 3 次。
+`TX-MUTED` / `LINK-DEAD` are known transients on this board and are **handled
+automatically**: a failed bring-up runs the upstream recovery ladder (API
+reset → soft reset → LDO power-cycle), then retries, 3 attempts by default.
 
-只有恢复阶梯自己报告"仍无响应"时才会停下来找你 —— 那种情况才需要
-物理拔插 USB。想改次数:`apps/live.py --attempts N`。
+Only when the ladder itself reports no response is it your turn — that is the
+one case that needs a physical USB replug. To change attempts:
+`apps/live.py --attempts N`.
 
-## 撤销对上游的改动
+## Undoing the upstream edit
 
-`2_apply_queue.py` 改的是 EVK 插件注册表(`PysonicPlugins.toml`),
-原件已备份。要完全还原:
+`2_apply_queue.py` edits the EVK plugin registry (`PysonicPlugins.toml`);
+the original is backed up. To restore completely:
 
 ```
 python tools/use_queue.py restore
 ```
 
-上游 matrix 轨录 npz 时假设的是它自己的 22 cm 队列
-(`matrix/frames.py` 里硬编码 `SMCLK_PER_SAMPLE = 32`),
-所以回去用那套之前记得 restore。
+The upstream matrix pipeline assumes its own 22 cm queue when recording npz
+(`matrix/frames.py` hardcodes `SMCLK_PER_SAMPLE = 32`), so run restore before
+going back to that setup.
 
-## run/8 和 run/9 怎么选
+## Choosing between run/8 and run/9
 
-ICU-10201 只有**一个算法槽**,所以两者互斥:
+The ICU-10201 has **one algorithm slot**, so the two are mutually exclusive:
 
-| | run/8 (txrot) | run/9 (官方 gpt) |
+| | run/8 (txrot) | run/9 (vendor gpt) |
 | --- | --- | --- |
-| 通道 | **2×2 = 4**(含交叉收发 PC) | 2(只有自发自收) |
-| 检测在哪 | 主机端(我们自己的 σ 门限) | **芯片上**(厂商绝对门限) |
-| 静止物体 | 2.6 秒淡出(报「变化」) | **一直报**(报「存在」) |
-| 序列 | 233 cm 自制队列 | 厂商 Long Range |
-| 近场处理 | 逐格噪声归一化 | ringdown_cancel=10 + 8 段门限 |
+| Channels | **2×2 = 4** (incl. cross PC) | 2 (pulse-echo only) |
+| Detection | host-side (our sigma gate) | **on-chip** (vendor absolute threshold) |
+| Still objects | fade in 2.6 s ("what changed") | **keep reporting** ("what is there") |
+| Sequence | our 233 cm queue | vendor Long Range |
+| Near field | per-bin noise normalisation | ringdown_cancel + 8-segment threshold |
 
-来回切换是自动的:每个脚本开板时都会烧自己要的固件。跑 run/8 就换回 txrot。
+Switching is automatic: each script flashes the firmware it needs at startup.
+Run run/8 and txrot is back.

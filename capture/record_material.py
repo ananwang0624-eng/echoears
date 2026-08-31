@@ -1,15 +1,16 @@
-"""🧶 材质对比 — 30 s(听力测验题库)
+"""🧶 Material contrast — 30 s (quiz material)
 
-点右上角 ▶ Run。板子插好,先跑过 run/2_apply_queue.py。
+Click ▶ Run (top right). Board plugged in; run/2_apply_queue.py done once.
 
-物理:选定 60 cm 一个固定位置(桌上做个记号)。
-录时:硬面(书/硬纸板)放记号处 10 秒 → 拿走空 5 秒 →
-      软物(毛衣团/抱枕)放同一位置 10 秒 → 拿走。
-用途:同距离、不同材质 —— 硬面回波响亮,软物哑几个量级。
-      测验问法:"两段回波在同一距离,哪段是毛衣?"
-
-多录几遍就多点几次 ▶,每次生成新的带时间戳文件,不覆盖。
-输出 -> out/capture/material_<时间>.npz + manifest.json 追加一行。
+Setup:  mark a fixed spot at 60 cm.
+During: hard book on the mark for 10 s -> empty for 5 s -> soft sweater
+        bundle on the same mark for 10 s -> away.
+Use:    same distance, different reflectivity — hard faces ring loud, soft
+        things are orders of magnitude quieter. Quiz: "which one was the
+        sweater?"
+Re-run for more takes — just click ▶ again; every run writes a new
+timestamped file, nothing is overwritten.
+Output -> out/capture/<label>_<time>.npz + a manifest.json line.
 """
 import pathlib
 import sys
@@ -19,5 +20,5 @@ import _engine
 
 raise SystemExit(_engine.record_shot(
     label="material", seconds=30,
-    note="材质:60 cm 记号处 硬书 10 s → 空 5 s → 毛衣团 10 s",
+    note="material: hard book 10 s at the 60 cm mark -> empty 5 s -> sweater 10 s",
 ))

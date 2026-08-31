@@ -4,7 +4,7 @@
     python tools/bridge.py                 # hardware
     python tools/bridge.py --replay <npz> --odr 6    # no hardware, same wire format
 
-Then open the web app and press "连接实时硬件" (default ws://localhost:8765).
+Then open the web app and press "Live" (default ws://localhost:8765).
 
 All four channels are sent as plain JSON magnitudes so the browser can show
 the full 2x2 A-scan and mix any channel into either ear: 4 x 301 integers at
@@ -83,7 +83,7 @@ class Server:
         self.meta_json = None
         self.lock = threading.Lock()
         threading.Thread(target=self._accept_loop, daemon=True).start()
-        print(f"[bridge] ws://{host}:{port} — 等待浏览器连接")
+        print(f"[bridge] ws://{host}:{port} — waiting for the browser")
 
     def _accept_loop(self):
         while True:
@@ -101,7 +101,7 @@ class Server:
                 if self.meta_json:
                     try: send_text(conn, self.meta_json)
                     except OSError: self.client = None
-            print(f"[bridge] 浏览器已连接 {addr[0]}")
+            print(f"[bridge] browser connected {addr[0]}")
 
     def set_meta(self, meta: dict):
         self.meta_json = json.dumps(meta)
@@ -119,7 +119,7 @@ class Server:
             except OSError:
                 # A dead browser must never take the capture down with it.
                 self.client = None
-                print("[bridge] 浏览器断开")
+                print("[bridge] browser disconnected")
 
 
 def main() -> int:
@@ -227,8 +227,8 @@ def main() -> int:
                 time.sleep(0.005)
             hz = (min(cnt.values()) / 2.0) or src.frame_hz
             publish_meta(chans, src.n_samples, hz, axes, ears)
-            print(f"[bridge] 测距固件 {hz:.1f} Hz, "
-                  f"耳朵=ch{ears[0]}/{ears[1]} — Ctrl-C 停止")
+            print(f"[bridge] rangefinder {hz:.1f} Hz, "
+                  f"ears=ch{ears[0]}/{ears[1]} — Ctrl-C to stop")
             n = 0
             pend: dict[int, dict] = {}
             while True:
@@ -260,7 +260,7 @@ def main() -> int:
                 for c in range(len(chans))]
         hz = src.frame_hz or 25.6
         publish_meta(chans, src.session.n_samples, hz, axes, ears)
-        print(f"[bridge] 回放 {args.replay.name} @ {hz:.1f} Hz — Ctrl-C 停止")
+        print(f"[bridge] replay {args.replay.name} @ {hz:.1f} Hz — Ctrl-C to stop")
         period = 1.0 / hz
         while True:                                   # loop the recording
             for _ts, mag in src.frames():
@@ -277,8 +277,8 @@ def main() -> int:
             axes = [src.range_axis(c, smclk_per_sample=smclk)
                     for c in range(len(src.channels))]
             publish_meta(src.channels, src.n_samples, src.frame_hz, axes, ears)
-            print(f"[bridge] 实时 {src.frame_hz:.1f} Hz, 耳朵=ch{ears[0]}/{ears[1]} "
-                  f"— Ctrl-C 停止")
+            print(f"[bridge] live {src.frame_hz:.1f} Hz, ears=ch{ears[0]}/{ears[1]} "
+                  f"— Ctrl-C to stop")
             n = 0
             while True:
                 for _ts, mag in src.poll():
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     try:
         rc = main()
     except KeyboardInterrupt:
-        print("\n[bridge] 停止")
+        print("\n[bridge] stopped")
         rc = 0
     # The vendor serial stack starts non-daemon threads, so a normal exit
     # joins them and can block forever — which would look to the user like

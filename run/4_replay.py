@@ -1,11 +1,12 @@
-"""▶ 回放录音 — 不需要硬件
+"""▶ Replay a recording — no hardware needed
 
-点右上角 ▶ Run 按钮直接运行。
+Click ▶ Run (top right).
 
-用一段已录好的 npz 跑**完全相同**的音频管线(GrainSynth + 基线去杂波 +
-立体声输出)。板子没插、在别的地方调音、或者想反复听同一段时用这个。
+Runs the IDENTICAL audio pipeline (GrainSynth + baseline clutter removal +
+stereo out) from a recorded npz. Use it with no board plugged in, or to
+listen to the same take repeatedly.
 
-按 Enter 用默认那段 hand_moving(手在传感器前移动,30 秒)。
+Enter accepts the default hand_moving take (hand in front of the rig, 30 s).
 """
 import sys
 from pathlib import Path
@@ -15,15 +16,15 @@ from _launcher import (ARCHIVE_ODR, OUT, SAMPLE_NPZ, ask, banner,  # noqa: E402
                        ensure_py39, run_app)
 
 ensure_py39()
-banner("回放(无硬件)", "同一条音频管线,数据来自录音")
+banner("Replay (no hardware)", "same audio pipeline, data from a recording")
 
-npz = Path(ask("npz 路径", str(SAMPLE_NPZ))).expanduser()
+npz = Path(ask("npz path", str(SAMPLE_NPZ))).expanduser()
 if not npz.is_file():
-    raise SystemExit(f"\n  找不到文件:{npz}")
+    raise SystemExit(f"\n  file not found: {npz}")
 
-odr = ask("这段录音的 CIC ODR", ARCHIVE_ODR, int)
-seconds = ask("播放时长(秒,0=整段)", 30, int)
-gain = ask("音量 0.1-1.0", 0.6, float)
+odr = ask("CIC ODR of this recording", ARCHIVE_ODR, int)
+seconds = ask("Play for (seconds, 0 = all)", 30, int)
+gain = ask("Volume 0.1-1.0", 0.6, float)
 
 args = ["--replay", npz, "--odr", odr, "--gain", gain,
         "--wav", OUT / "replay.wav"]

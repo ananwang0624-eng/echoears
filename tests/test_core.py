@@ -279,7 +279,7 @@ def test_live_source_gives_up_after_attempts(monkeypatch):
     srcmod = _fake_stack(monkeypatch, _rig_factory(calls, succeed_on=99),
                          lambda _p: True)
     src = srcmod.LiveSource("cfg", "/dev/fake", attempts=2)
-    with pytest.raises(RuntimeError, match="已自动重试 2 次"):
+    with pytest.raises(RuntimeError, match="retried 2 times"):
         src.start()
     assert calls["open"] == 2
 
@@ -322,7 +322,7 @@ def test_config_hint_names_the_matching_config(monkeypatch):
     err = Exception("sensors [2, 3] != config (0, 2, 3)")
     hint = LiveSource._config_hint(err, fake_configs)
     assert "p2x2_txrot_pair23" in hint
-    assert "不是板子坏了" in hint
+    assert "not a broken board" in hint
 
 
 def test_sensor_mismatch_does_not_run_recovery(monkeypatch):

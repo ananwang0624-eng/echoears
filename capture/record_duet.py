@@ -1,14 +1,14 @@
-"""🙌 双手二重奏 — 30 s
+"""🙌 Two-hand duet — 30 s
 
-点右上角 ▶ Run。板子插好,先跑过 run/2_apply_queue.py。
+Click ▶ Run (top right). Board plugged in; run/2_apply_queue.py done once.
 
-物理:左手对左传感器(id 3),右手对右传感器(id 2)。
-录时:两手各自独立推拉,节奏错开(左慢右快),
-      让两只耳朵听到不同的声部。
-用途:双耳分离的听觉证据 — 左耳左手、右耳右手。
-
-多录几遍就多点几次 ▶,每次生成新的带时间戳文件,不覆盖。
-输出 -> out/capture/duet_<时间>.npz + manifest.json 追加一行。
+Setup:  left hand over the left sensor (id 3), right hand over the right (id 2).
+During: move the hands independently, offset rhythms (left slow, right fast),
+        so each ear hears a different voice.
+Use:    evidence of binaural separation — left ear left hand, right ear right.
+Re-run for more takes — just click ▶ again; every run writes a new
+timestamped file, nothing is overwritten.
+Output -> out/capture/<label>_<time>.npz + a manifest.json line.
 """
 import pathlib
 import sys
@@ -18,5 +18,5 @@ import _engine
 
 raise SystemExit(_engine.record_shot(
     label="duet", seconds=30,
-    note="双手二重奏:左手对左传感器慢、右手对右传感器快,独立推拉",
+    note="two-hand duet: left hand slow over id 3, right fast over id 2",
 ))

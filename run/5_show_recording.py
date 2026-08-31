@@ -1,9 +1,10 @@
-"""🔍 看一段录音的距离剖面(ASCII 图)
+"""🔍 Inspect a recording's range profile (ASCII)
 
-点右上角 ▶ Run 按钮直接运行。不出声,只看数据。
+Click ▶ Run (top right). No sound — data only.
 
-会打印 9 个通道各自的能量沿距离的分布,以及去掉静态杂波后的分布。
-去杂波前峰值在 1-3 cm 的是振铃;去杂波后峰值移到 5-10 cm 的才是真目标。
+Prints each channel's energy along the range axis, before and after static
+clutter removal. Pre-removal peaks at 1-3 cm are ringdown; post-removal
+peaks further out are real targets.
 """
 import sys
 from pathlib import Path
@@ -13,11 +14,11 @@ from _launcher import (ARCHIVE_ODR, SAMPLE_NPZ, ask, banner,  # noqa: E402
                        ensure_py39, run_app)
 
 ensure_py39()
-banner("录音距离剖面")
+banner("Recording range profile")
 
-npz = Path(ask("npz 路径", str(SAMPLE_NPZ))).expanduser()
+npz = Path(ask("npz path", str(SAMPLE_NPZ))).expanduser()
 if not npz.is_file():
-    raise SystemExit(f"\n  找不到文件:{npz}")
-odr = ask("这段录音的 CIC ODR", ARCHIVE_ODR, int)
+    raise SystemExit(f"\n  file not found: {npz}")
+odr = ask("CIC ODR of this recording", ARCHIVE_ODR, int)
 
 raise SystemExit(run_app("apps/show.py", [npz, "--odr", odr, "--static"]))

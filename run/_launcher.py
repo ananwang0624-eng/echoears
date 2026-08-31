@@ -78,7 +78,7 @@ def ask(label: str, default, cast=str):
     try:
         return cast(raw)
     except ValueError:
-        print(f"  ! 无法解析 {raw!r},用默认值 {default}")
+        print(f"  ! cannot parse {raw!r}, using default {default}")
         return default
 
 

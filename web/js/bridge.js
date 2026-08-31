@@ -39,9 +39,9 @@ export class LiveBridge {
       return;
     }
     const retry = () => {
-      if (this.closed || this.meta) { if (this.meta) onError("连接中断"); return; }
-      if (++this.tries > 20) { onError("40 秒内连不上桥接器"); return; }
-      onWait?.(`等待桥接器启动 … ${this.tries * 2} s(烧录+标定约 20 s)`);
+      if (this.closed || this.meta) { if (this.meta) onError("connection lost"); return; }
+      if (++this.tries > 20) { onError("no bridge after 40 s"); return; }
+      onWait?.(`waiting for the bridge … ${this.tries * 2} s (flash+calibration ~20 s)`);
       setTimeout(() => this._connect(), 2000);
     };
     this.ws.onerror = () => {};
@@ -54,7 +54,7 @@ export class LiveBridge {
         // the wire format changed units (counts -> sigmas) once already;
         // a mismatch must be loud, not a silently 8x-hot noise floor
         if ((msg.protocol ?? 1) !== 2) {
-          onError(`桥接器协议版本 ${msg.protocol ?? 1},页面需要 2 — 请更新其中一端`);
+          onError(`bridge protocol ${msg.protocol ?? 1}, page needs 2 — update one side`);
           this.close();
           return;
         }

@@ -1,14 +1,15 @@
-"""↔️ 左右横穿 — 20 s(双耳声像的招牌)
+"""↔️ Left-right crossing — 20 s (the binaural showpiece)
 
-点右上角 ▶ Run。板子插好,先跑过 run/2_apply_queue.py。
+Click ▶ Run (top right). Board plugged in; run/2_apply_queue.py done once.
 
-物理:传感器前方 ~1 m 留出左右各一步的空间。
-录时:从最左侧走到最右侧(约 4 秒),停 2 秒,再走回来。共两趟。
-用途:回波从左耳滑到右耳 —— 戴耳机听得到"有人从左边走过去"。
-      瀑布图上左通道条纹先亮、右通道后亮。
-
-多录几遍就多点几次 ▶,每次生成新的带时间戳文件,不覆盖。
-输出 -> out/capture/cross_<时间>.npz + manifest.json 追加一行。
+Setup:  a clear step of space on each side, ~1 m out.
+During: walk from far left to far right (~4 s), pause 2 s, walk back.
+        Two passes.
+Use:    the echo slides from the left ear to the right — on headphones you
+        hear someone walk past.
+Re-run for more takes — just click ▶ again; every run writes a new
+timestamped file, nothing is overwritten.
+Output -> out/capture/<label>_<time>.npz + a manifest.json line.
 """
 import pathlib
 import sys
@@ -18,5 +19,5 @@ import _engine
 
 raise SystemExit(_engine.record_shot(
     label="cross", seconds=20,
-    note="横穿:~1 m 处 最左→最右(4 s)停 2 s→走回,共两趟",
+    note="crossing: far left -> far right at ~1 m (4 s), pause 2 s, back; two passes",
 ))

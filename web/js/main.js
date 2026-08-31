@@ -87,9 +87,9 @@ function buildMixer(meta) {
     el.innerHTML = `
       <label class="sw"><input type="checkbox" ${cfg.on ? "checked" : ""}>
         <b>${tx}→${rx}</b> ${isPE ? "PE" : "PC"}</label>
-      <label>Vol 音量 <input type="range" min="0" max="1" step="0.01" value="${cfg.level}"></label>
-      <label>Pan 左右 <input type="range" min="-1" max="1" step="0.05" value="${cfg.pan}"></label>
-      <label>Oct 八度(频率×2ⁿ) <select>
+      <label>Vol <input type="range" min="0" max="1" step="0.01" value="${cfg.level}"></label>
+      <label>Pan <input type="range" min="-1" max="1" step="0.05" value="${cfg.pan}"></label>
+      <label>Oct (freq ×2ⁿ) <select>
         <option value="-2">−2</option><option value="-1">−1</option>
         <option value="0">0</option><option value="1">+1</option>
       </select></label>`;
@@ -118,7 +118,7 @@ async function loadSession(stem) {
   if (state.live) toggleLive();   // one source at a time
   const wasPlaying = state.playing;
   stop();
-  setStatus(`加载 ${stem} …`);
+  setStatus(`Loading ${stem} …`);
   try {
     const s = await Session.load(stem);
     state.session = s;
@@ -136,12 +136,12 @@ async function loadSession(stem) {
 
     setRawWarn(!s.sigmaUnits);
     $("meta").textContent =
-      `${s.meta.title} · ${s.nFrames} 帧 @ ${s.frameHz.toFixed(1)} Hz · ` +
-      `${s.nChannels} 通道 × ${s.nSamples} 格 · ` +
+      `${s.meta.title} · ${s.nFrames} frames @ ${s.frameHz.toFixed(1)} Hz · ` +
+      `${s.nChannels} ch × ${s.nSamples} samples · ` +
       `${s.rangeCm(state.ears[0])[0].toFixed(0)}–` +
       `${s.rangeCm(state.ears[0]).at(-1).toFixed(0)} cm` +
-      (s.meta.staticRemoved ? " · 已去静态杂波" : " · 原始数据");
-    setStatus("Ready — headphones on, press Play · 就绪,戴上耳机按播放", "ok");
+      (s.meta.staticRemoved ? " · static clutter removed" : " · raw counts");
+    setStatus("Ready — headphones on, press Play", "ok");
     render(0);
     if (wasPlaying) play();       // the raw/normalised A/B is a comparison,
                                   // and stopping between halves kills it
@@ -149,8 +149,8 @@ async function loadSession(stem) {
     setRawWarn(false);
     setStatus(location.protocol === "file:"
       ? "Needs a local server (any static server will do) — run/8_web.py "
-        + "· 需要本地服务器"
-      : `加载失败:${e.message}`, "err");
+        + "· needs a local server"
+      : `Load failed: ${e.message}`, "err");
   }
 }
 
@@ -237,11 +237,11 @@ function armResume() {
   const ctx = state.audio.ctx;
   if (!ctx || ctx.state === "running" || state.resumeArmed) return;
   state.resumeArmed = true;
-  setStatus("Browser blocked audio — click anywhere to enable · 浏览器暂停了音频,点页面任意位置启用", "err");
+  setStatus("Browser blocked audio — click anywhere to enable", "err");
   document.addEventListener("pointerdown", () => {
     state.audio.ctx?.resume();
-    if ($("status").textContent.includes("暂停了音频"))
-      setStatus("Audio enabled 音频已启用", "ok");
+    if ($("status").textContent.includes("blocked audio"))
+      setStatus("Audio enabled", "ok");
   }, { once: true });
 }
 
@@ -279,7 +279,7 @@ function play() {
   state.audio.setGain(parseFloat($("gain").value));
   state.playing = true;
   rebase();
-  $("play").textContent = "⏸ Pause 暂停";
+  $("play").textContent = "⏸ Pause";
   $("play").classList.add("on");
   cancelAnimationFrame(state.rafId);
   state.rafId = requestAnimationFrame(loop);
@@ -290,7 +290,7 @@ function stop() {
   state.audio.hush();          // tone voices persist — silence them
   cancelAnimationFrame(state.rafId);
   const b = $("play");
-  if (b) { b.textContent = "▶ Play 播放"; b.classList.remove("on"); }
+  if (b) { b.textContent = "▶ Play"; b.classList.remove("on"); }
 }
 
 /* ----------------------------------------------------------------- live -- */
@@ -304,8 +304,8 @@ function toggleLive() {
     state.live = false;
     syncD();
     $("liveBtn").classList.remove("on");
-    $("liveBtn").textContent = "🔌 Live 连接实时硬件";
-    setStatus("已断开实时连接");
+    $("liveBtn").textContent = "🔌 Live";
+    setStatus("Live disconnected");
     return;
   }
   stop();
@@ -317,7 +317,7 @@ function toggleLive() {
       state.session = null;
       state.meta = meta;
       $("meta").textContent =
-        `实时 · ${meta.nChannels} 通道 × ${meta.nSamples} 格 · ` +
+        `Live · ${meta.nChannels} ch × ${meta.nSamples} samples · ` +
         `${meta.frameHz.toFixed(1)} Hz · ` +
         `${meta.rangeCm[0][0].toFixed(0)}–${meta.rangeCm[0].at(-1).toFixed(0)} cm`;
       state.liveMeta = meta;
@@ -331,7 +331,7 @@ function toggleLive() {
       buildMixer(meta);
       fitBlind(meta);
       syncD();
-      setStatus("Live stream connected · 实时数据流已连接", "ok");
+      setStatus("Live stream connected", "ok");
     },
     onFrame: (profiles, tg) => {
       const peak = FULL_SIGMA;
@@ -355,15 +355,15 @@ function toggleLive() {
     onError: (msg) => {
       stop();
       state.audio.hush();          // or the ping timer voices the frozen
-      setStatus(`实时连接失败:${msg} — 桥接器跑起来了吗?`, "err");
+      setStatus(`Live connect failed: ${msg} — is the bridge running?`, "err");
       state.live = false;
       $("liveBtn").classList.remove("on");
-      $("liveBtn").textContent = "🔌 Live 连接实时硬件";
+      $("liveBtn").textContent = "🔌 Live";
     },
   });
   $("liveBtn").classList.add("on");
-  $("liveBtn").textContent = "⏹ 断开 Disconnect";
-  setStatus("正在连接桥接器 … Connecting");
+  $("liveBtn").textContent = "⏹ Disconnect";
+  setStatus("Connecting to the bridge …");
   state.live = true;
   syncD();
 }

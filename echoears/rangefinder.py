@@ -165,7 +165,7 @@ def _make_handler(base_cls):
                 # silently is how a handler that raised on every single
                 # callback looked exactly like a board delivering nothing.
                 import traceback
-                print(f"[range] handler 异常 ({k}):", flush=True)
+                print(f"[range] handler exception ({k}):", flush=True)
                 traceback.print_exception(type(e), e, e.__traceback__)
 
     return RangeHandler
@@ -214,20 +214,20 @@ class RangeSource:
         last = ""
         for attempt in range(1, self.attempts + 1):
             if attempt > 1:
-                print(f"\n[range] 自动救板 (第 {attempt}/{self.attempts} 次) ...")
+                print(f"\n[range] auto-recovery (attempt {attempt}/{self.attempts}) ...")
                 if not recover.auto_recover(self._port()):
-                    print("[range] 恢复阶梯跑完仍无响应 — 需要物理拔插 USB")
+                    print("[range] recovery ladder exhausted — replug the USB cable")
                     break
                 time.sleep(1.0)
             try:
                 return self._start_once()
             except BaseException as e:          # noqa: BLE001
                 last = f"{type(e).__name__}: {e}"
-                print(f"[range] 起板失败: {last.splitlines()[0][:120]}")
+                print(f"[range] bring-up failed: {last.splitlines()[0][:120]}")
                 self.close()
                 if isinstance(e, KeyboardInterrupt):
                     raise
-        raise RuntimeError(f"{last} — 已重试 {self.attempts} 次并跑过恢复阶梯")
+        raise RuntimeError(f"{last} — retried {self.attempts} times through the recovery ladder")
 
     def _port(self) -> str:
         if self.com_port:
