@@ -83,7 +83,7 @@ replay and inspection read them fine, the axis is per-file via `--odr`.
 ```
 time within a grain  =  distance      (near echoes sound early)
 grain amplitude      =  echo strength
-grain rate           =  sensor frame rate (25.6 Hz -> real time)
+grain rate           =  sensor frame rate (19.2 Hz -> real time)
 pitch                =  distance again, redundantly (near = high)
 ```
 
