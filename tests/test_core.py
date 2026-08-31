@@ -231,6 +231,8 @@ def _fake_stack(monkeypatch, rig_cls, recover_fn):
 
     from echoears import sources as srcmod
     monkeypatch.setattr(sys, "version_info", (3, 9, 0, "final", 0))
+    # callers must also pass repo=tmp_path: start() checks the sibling repo
+    # exists, and CI runners have no ~/Documents/GitHub/ultrasonic
     monkeypatch.setattr(srcmod.time, "sleep", lambda _s: None)
     return srcmod
 
@@ -257,7 +259,7 @@ def _rig_factory(calls, succeed_on):
     return FakeRig
 
 
-def test_live_source_retries_and_recovers(monkeypatch):
+def test_live_source_retries_and_recovers(monkeypatch, tmp_path):
     """A wedged board must run the recovery ladder and retry, not give up."""
     calls = {"open": 0, "recover": 0, "close": 0}
 
@@ -266,7 +268,7 @@ def test_live_source_retries_and_recovers(monkeypatch):
         return True
 
     srcmod = _fake_stack(monkeypatch, _rig_factory(calls, succeed_on=3), rec)
-    src = srcmod.LiveSource("cfg", "/dev/fake", attempts=3)
+    src = srcmod.LiveSource("cfg", "/dev/fake", repo=tmp_path, attempts=3)
     src.start()
 
     assert calls["open"] == 3      # brought up three times
@@ -274,22 +276,22 @@ def test_live_source_retries_and_recovers(monkeypatch):
     assert calls["close"] == 2     # the two failed rigs were closed
 
 
-def test_live_source_gives_up_after_attempts(monkeypatch):
+def test_live_source_gives_up_after_attempts(monkeypatch, tmp_path):
     calls = {"open": 0, "recover": 0, "close": 0}
     srcmod = _fake_stack(monkeypatch, _rig_factory(calls, succeed_on=99),
                          lambda _p: True)
-    src = srcmod.LiveSource("cfg", "/dev/fake", attempts=2)
+    src = srcmod.LiveSource("cfg", "/dev/fake", repo=tmp_path, attempts=2)
     with pytest.raises(RuntimeError, match="retried 2 times"):
         src.start()
     assert calls["open"] == 2
 
 
-def test_live_source_stops_when_ladder_cannot_revive_board(monkeypatch):
+def test_live_source_stops_when_ladder_cannot_revive_board(monkeypatch, tmp_path):
     """If recovery itself reports failure, stop — do not keep hammering."""
     calls = {"open": 0, "recover": 0, "close": 0}
     srcmod = _fake_stack(monkeypatch, _rig_factory(calls, succeed_on=99),
                          lambda _p: False)
-    src = srcmod.LiveSource("cfg", "/dev/fake", attempts=5)
+    src = srcmod.LiveSource("cfg", "/dev/fake", repo=tmp_path, attempts=5)
     with pytest.raises(RuntimeError):
         src.start()
     assert calls["open"] == 1      # gave up instead of retrying blindly
@@ -325,7 +327,7 @@ def test_config_hint_names_the_matching_config(monkeypatch):
     assert "not a broken board" in hint
 
 
-def test_sensor_mismatch_does_not_run_recovery(monkeypatch):
+def test_sensor_mismatch_does_not_run_recovery(monkeypatch, tmp_path):
     """The ladder must not fire for a config error — that is how boards wedge."""
     import types
     calls = {"recover": 0, "open": 0}
@@ -351,7 +353,7 @@ def test_sensor_mismatch_does_not_run_recovery(monkeypatch):
     srcmod.sys.modules["matrix"].configs.CONFIGS = {
         "p2x2_txrot_pair23": types.SimpleNamespace(
             name="p2x2_txrot_pair23", sensor_ids=(2, 3))}
-    src = srcmod.LiveSource("wrong", "/dev/fake", attempts=3)
+    src = srcmod.LiveSource("wrong", "/dev/fake", repo=tmp_path, attempts=3)
     with pytest.raises(RuntimeError, match="p2x2_txrot_pair23"):
         src.start()
     assert calls["open"] == 1      # failed once
@@ -488,7 +490,7 @@ def test_export_ears_maps_temples_to_pe_channels():
     assert ew.ears_channels(chans, left_sensor=5, right_sensor=2) is None
 
 
-def test_live_default_beat_is_26ms_and_lands_in_the_config(monkeypatch):
+def test_live_default_beat_is_26ms_and_lands_in_the_config(monkeypatch, tmp_path):
     """Regression: a bare LiveSource() inherited upstream's 13 ms beat, which
     the tx160 queue's 13.7 ms listening window cannot fit — frames desynced
     instead of erroring. The safe 26 ms must be the default AND actually be
@@ -498,7 +500,7 @@ def test_live_default_beat_is_26ms_and_lands_in_the_config(monkeypatch):
     srcmod = _fake_stack(monkeypatch, _rig_factory(calls, succeed_on=1),
                          lambda _p: True)
     assert srcmod.LiveSource.DEFAULT_ODR_MS == 26
-    src = srcmod.LiveSource("cfg", "/dev/fake")      # odr_ms left at None
+    src = srcmod.LiveSource("cfg", "/dev/fake", repo=tmp_path)  # odr_ms left at None
     assert src.odr_ms == 26
     src.start()
     assert src.rig.config.odr_ms == 26               # replace() really applied
