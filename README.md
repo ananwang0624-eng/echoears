@@ -14,6 +14,9 @@ thirty seconds.
 *Zero runtime dependencies · 79 unit tests · CI re-derives every documented
 number from the shipped demo data (`tools/check_docs.py`)*
 
+![The rig: two ICU-10201 ultrasonic transducers in printed temple mounts on
+a glasses frame, flex-cabled to the SmartSonic EVK](docs/img/rig.jpg)
+
 ![40 s hand sweep through the pipeline: push-pull cycles 30–110 cm, per-bin
 noise sigmas](docs/img/hand.png)
 
@@ -108,6 +111,20 @@ the bank no longer reshuffles and warbles at the frame rate.
 
 **Sweep** — the original audification: one grain per frame, time within the
 grain = distance. Kept as the honest raw view, but gated the same way.
+
+## Hardware
+
+A glasses frame with 3D-printed sensor mounts carrying two TDK **ICU-10201**
+ultrasonic transducers (PMUT time-of-flight sensors, ~175 kHz), one per
+temple, facing forward — id 3 on the wearer's left, id 2 on the right. Flex
+ribbons run to a TDK SmartSonic evaluation board, which talks to the laptop
+over USB. The extra mount at the bridge is left over from an earlier
+three-sensor experiment and is unused here.
+
+No electronics were designed for this project: the sensors and the EVK are
+stock, the frame is printed — everything downstream of the USB cable is this
+repository. The sensors fire and listen themselves (pulse-echo); the host
+does the DSP, the detection, and the sound.
 
 ## Web Audio, mapped
 
