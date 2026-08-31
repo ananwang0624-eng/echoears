@@ -664,10 +664,20 @@ def test_a_target_already_present_at_connect_is_absorbed_as_background():
 
 # --- SIGTERM must unwind, or the board is left streaming --------------------
 
-def _run_until_signalled(body, sig, wait=1.2, second_sig=None, tmp_path=None):
-    """Run `body` in a real subprocess, signal it, return (rc, stdout)."""
+def _run_until_signalled(body, sig, wait=0.3, second_sig=None, tmp_path=None):
+    """Run `body` in a real subprocess, signal it once it SAYS it is ready,
+    return (rc, stdout).
+
+    Readiness is the child\'s own first print ("STREAMING"/"FLASH-BEGIN"),
+    not a guessed sleep: the child imports numpy before the handler is
+    armed, and on a cold CI runner that takes longer than any constant —
+    a fixed 1.2 s passed on every warm machine and lost the race on
+    GitHub\'s ubuntu runner, where the default handler then killed the
+    child before cleanup existed. `wait` is now the settle time AFTER the
+    ready line, so the body is inside its loop when the signal lands."""
     import subprocess
     import tempfile
+    import threading
     # plain concatenation: dedent() would be defeated by `body` having no
     # indentation of its own, leaving the prelude indented
     src = (
@@ -681,21 +691,37 @@ def _run_until_signalled(body, sig, wait=1.2, second_sig=None, tmp_path=None):
     f = d / "victim.py"
     f.write_text(src)
     p = subprocess.Popen([sys.executable, str(f)], stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, text=True)
+                         stderr=subprocess.STDOUT, text=True, bufsize=1)
+    lines = []
+    ready = threading.Event()
+
+    def _pump():
+        for ln in p.stdout:
+            lines.append(ln)
+            if "STREAMING" in ln or "FLASH-BEGIN" in ln:
+                ready.set()
+        ready.set()             # EOF: unblock the waiter, whatever happened
+
+    reader = threading.Thread(target=_pump, daemon=True)
+    reader.start()
     try:
+        ready.wait(30)
         time.sleep(wait)
-        p.send_signal(sig)
+        if p.poll() is None:
+            p.send_signal(sig)
         if second_sig is not None:
             time.sleep(0.3)
-            p.send_signal(second_sig)
+            if p.poll() is None:
+                p.send_signal(second_sig)
         try:
-            out, _ = p.communicate(timeout=15)
+            p.wait(timeout=15)
         except subprocess.TimeoutExpired:
-            # communicate() does NOT kill on timeout; without this a
-            # regression leaves a 30 s sleeper orphaned past the test
+            # wait() does NOT kill on timeout; without this a regression
+            # leaves a 30 s sleeper orphaned past the test
             p.kill()
-            out, _ = p.communicate(timeout=5)
-        return p.returncode, out
+            p.wait(timeout=5)
+        reader.join(timeout=5)
+        return p.returncode, "".join(lines)
     finally:
         if p.poll() is None:
             p.kill()
