@@ -6,9 +6,10 @@ run/9 uses Long Range: built for walls at 2-5 m, near thresholds of
 1600/800 counts — a palm inside 80 cm barely registers. Here you can
 switch to:
 
-  short    Short Range (default): ~1 cm/bin, 60-135 cm at only 200
-           counts, stepped-down TX for a shorter ringdown —
-           palm-friendly; use this for hand demos
+  short    Short Range (default): 0.19 cm/bin, listening window
+           ~16-55 cm, 200-count sweet zone ~27-41 cm; stepped-down TX
+           for a shorter ringdown. Palm-friendly — keep the hand
+           INSIDE ~50 cm, anything further is outside the window
   static   Static Target Rejection: the chip suppresses still
            targets, reports changes only
   default  factory defaults

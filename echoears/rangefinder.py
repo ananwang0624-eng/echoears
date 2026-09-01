@@ -34,8 +34,10 @@ ULTRASONIC_REPO = Path.home() / "Documents" / "GitHub" / "ultrasonic"
 #:   long    Long Range.json — ODR 2 (3.1 cm/bin, reach ~5.6 m), near
 #:           thresholds 1600/800 counts: built for walls at 2-5 m, nearly
 #:           blind to a palm inside 80 cm.
-#:   short   Short Range.json — ODR 6 (~1 cm/bin), 60-135 cm at only 200
-#:           counts, stepped-down TX for a shorter ringdown: palm-friendly.
+#:   short   Short Range.json — ODR 6 (0.19 cm/bin, window ~16-55 cm),
+#:           the 200-count threshold zone sits at ~27-41 cm, stepped-down TX
+#:           for a shorter ringdown: palm-friendly, but ONLY inside ~55 cm —
+#:           measured on a real capture (axis 15.7-54.5 cm, 201 samples).
 #:   static  Static Target Rejection.json — like the txrot ethos, reports
 #:           what CHANGED.
 #:   default defaults.json.
