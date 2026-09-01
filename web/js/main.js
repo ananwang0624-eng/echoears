@@ -114,6 +114,46 @@ function setRawWarn(raw) {
   $("modeHint").hidden = raw;
 }
 
+/* Per-dataset suggested playback settings.
+
+   A dataset's meta may carry `suggest`, e.g. {mode, gate, gamma}: presets
+   tuned for THAT recording (the palm sweep wants a high gate so the
+   cross-bleed ear falls silent and the sound truly shuttles). Applied on
+   load; datasets without one restore the page defaults, so one dataset's
+   tuning never leaks into the next. Presentation only — the data itself
+   is untouched. */
+const SUGGEST_SLIDERS = ["gain", "gamma", "gate", "blind", "ping", "wet",
+                         "fNear", "fFar"];
+
+function currentSettings() {
+  const out = { mode: $("mode").value, sweep: $("sweep").checked };
+  for (const id of SUGGEST_SLIDERS) out[id] = $(id).value;
+  return out;
+}
+
+function applySettings(s) {
+  for (const id of SUGGEST_SLIDERS) {
+    if (s[id] === undefined) continue;
+    const el = $(id);
+    el.value = String(s[id]);
+    el.dispatchEvent(new Event("input"));      // runs the bind() sync
+  }
+  if (s.mode !== undefined && $("mode").value !== s.mode) {
+    $("mode").value = s.mode;
+    $("mode").dispatchEvent(new Event("change"));
+  }
+  if (s.sweep !== undefined) {
+    $("sweep").checked = !!s.sweep;
+    $("sweep").dispatchEvent(new Event("change"));
+  }
+}
+
+function applyPreset(suggest) {
+  if (!state.baseline) return;                 // boot not finished yet
+  applySettings(suggest ? { ...state.baseline, ...suggest }
+                        : state.baseline);
+}
+
 async function loadSession(stem) {
   if (state.live) toggleLive();   // one source at a time
   const wasPlaying = state.playing;
@@ -135,6 +175,7 @@ async function loadSession(stem) {
     fitBlind(s.meta);
 
     setRawWarn(!s.sigmaUnits);
+    applyPreset(s.meta.suggest);
     $("meta").textContent =
       `${s.meta.title} · ${s.nFrames} frames @ ${s.frameHz.toFixed(1)} Hz · ` +
       `${s.nChannels} ch × ${s.nSamples} samples · ` +
@@ -425,6 +466,8 @@ function boot() {
   });
 
   window.addEventListener("resize", () => state.session && render(state.frame));
+  state.baseline = currentSettings();          // page defaults, for datasets
+                                               // without a suggest block
   loadSession($("dataset").value);
   // console handle for live tuning: EE.audio.params, EE.audio.strips, ...
   window.EE = state;
